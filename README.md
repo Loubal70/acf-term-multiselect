@@ -29,6 +29,10 @@ La version actuelle de ACF Term MultiSelect est la `v1.0.0`. Veuillez vous réf�
 </p>
 </details>
 
+### A faire
+- [ ] Dev - Le bloc ne peut pas être un sous champ d'un bloc group
+- [ ] Dev - Le bloc ne support pas le wrapper width...
+
 ## Auteurs
 
 - [@Loubal70](https://github.com/Loubal70)
