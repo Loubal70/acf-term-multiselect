@@ -111,21 +111,10 @@ add_action('init', function () {
                 $args['search'] = $options['s'];
             }
 
-            if (!empty($field['choices'])) {
-                $terms = get_terms($field['choices'], $args);
-            } else {
-                // Get terms with all taxonomies
-                $terms = get_terms($field['taxonomies'], $args);
-            }
-
-            foreach ($terms as $term) {
-                $taxonomy = $term->taxonomy;
-                if (!array_key_exists($taxonomy, $terms)) {
-                    $terms[$taxonomy] = array();
-                }
-                $terms[$taxonomy][] = $term;
-            }
-            ksort($terms);
+            $terms = get_terms( array(
+                'taxonomy' => 'package_price',
+                'hide_empty' => false,
+            ) );
 
             $new_array = array();
 
@@ -134,20 +123,29 @@ add_action('init', function () {
                 if (is_a($item, 'WP_Term')) {
                     // Vérifier si la propriété 'taxonomy' existe
                     if (property_exists($item, 'taxonomy')) {
-                        $taxonomy = $item->taxonomy;
+                        $parent_id = $item->parent;
                         $term_id = $item->term_id;
                         $name = $item->name;
+
+                        // Récupérer le nom de la catégorie parent
+                        $parent_name = '';
+                        if ($parent_id > 0) {
+                            $parent_term = get_term($parent_id);
+                            if (is_a($parent_term, 'WP_Term')) {
+                                $parent_name = $parent_term->name;
+                            }
+                        }
 
                         // Vérifier si le tableau contient déjà une entrée avec cette taxonomie
                         $found_taxonomy = false;
                         foreach ($new_array as &$taxonomy_item) {
-                            if ($taxonomy_item['text'] === $taxonomy) {
+                            if ($taxonomy_item['text'] === $parent_id) {
                                 $found_taxonomy = true;
                                 // Ajouter le terme à la liste des enfants
                                 $taxonomy_item['children'][] = array(
                                     'id' => $term_id,
                                     'text' => $name,
-                                    'parent' => $taxonomy,
+                                    'parent' => $parent_id,
                                 );
                                 break;
                             }
@@ -156,12 +154,12 @@ add_action('init', function () {
                         // Si la taxonomie n'existe pas encore dans le tableau, l'ajouter
                         if (!$found_taxonomy) {
                             $new_array[] = array(
-                                'text' => $taxonomy,
+                                'text' => $parent_name,
                                 'children' => array(
                                     array(
                                         'id' => $term_id,
                                         'text' => $name,
-                                        'parent' => $taxonomy,
+                                        'parent' => $parent_id,
                                     ),
                                 ),
                             );
@@ -169,7 +167,9 @@ add_action('init', function () {
                     }
                 }
             }
-            // vars
+
+
+                // vars
             $response = array(
                 'results' => $new_array,
                 'limit' => $limit
